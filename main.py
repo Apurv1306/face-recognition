@@ -112,7 +112,7 @@ class FaceApp(App):
         # Critical check: if the cascade classifier fails to load, face detection won't work.
         if self.face_cascade.empty():
             Logger(f"[ERROR] Failed to load Haar cascade classifier. "
-                   f"Path tried: {cv2.data.haascades + 'haarcascade_frontalface_default.xml'}. "
+                   f"Path tried: {cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'}. "
                    f"Please ensure 'haarcascade_frontalface_default.xml' is present and accessible, "
                    f"and that opencv-python is correctly installed.")
             # Raise a runtime error to halt execution if the cascade is missing/corrupted.
