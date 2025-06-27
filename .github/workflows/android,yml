@@ -22,6 +22,30 @@ jobs:
       run: |
         pip install buildozer
 
+    - name: Set up Android SDK and NDK
+      # This step installs the necessary Android SDK command-line tools and NDK
+      # and accepts the licenses, making `sdkmanager` available.
+      run: |
+        # Create a directory for Android SDK
+        mkdir -p "$HOME/android-sdk"
+        export ANDROID_HOME="$HOME/android-sdk"
+        export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+        # Download Android command-line tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-8583021_latest.zip -O /tmp/cmdline-tools.zip
+        unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+        mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+
+        # Install necessary SDK components (e.g., platform-tools, build-tools, platforms)
+        # The NDK version should match what's specified in buildozer.spec (android.ndk = 21b)
+        # For NDK 21b, the corresponding package is 'ndk;21.4.7075529' or similar.
+        # It's safer to let Buildozer download NDK unless a specific version is absolutely required and known to be available via sdkmanager.
+        # However, for the 'sdkmanager: command not found' error, installing basic platform-tools is key.
+        echo "y" | sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33"
+
+        # Accept Android SDK licenses
+        yes | sdkmanager --licenses || true
+
     - name: Cache Buildozer dependencies
       uses: actions/cache@v4
       with:
@@ -36,6 +60,9 @@ jobs:
 
     - name: Build Android APK
       run: |
+        # Ensure ANDROID_HOME and PATH are set for Buildozer
+        export ANDROID_HOME="$HOME/android-sdk"
+        export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
         buildozer android debug
 
     - name: Upload APK artifact
