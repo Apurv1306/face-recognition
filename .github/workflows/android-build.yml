@@ -47,10 +47,6 @@ jobs:
     - name: Add execute permission to main.py (if needed)
       run: chmod +x main.py
 
-    - name: Clean Buildozer cache
-      # Clean previous build artifacts to ensure a fresh start with correct SDK paths
-      run: buildozer clean
-
     - name: Build Android APK
       run: |
         # Buildozer should now find the SDK and NDK correctly set up by the previous action.
