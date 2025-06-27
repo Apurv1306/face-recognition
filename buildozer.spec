@@ -11,6 +11,6 @@ main.py = main.py
 android.permissions = INTERNET,CAMERA
 debug = True
 android.target_sdk_version = 34
-android.min_sdk_version = 21
+android.min_sdk_version = 24
 android.ndk = 21b
 android.sdk_path = /usr/local/lib/android/sdk
