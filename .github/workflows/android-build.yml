@@ -17,6 +17,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Clean Buildozer environment
+      # Remove the .buildozer directory to force a fresh build and re-read of buildozer.spec
+      run: |
+        rm -rf .buildozer
+        echo "Cleaned .buildozer directory."
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -37,7 +43,7 @@ jobs:
       with:
         api-level: 34 # Target Android API 34
         build-tools: 34.0.0 # Match API 34
-        ndk: 21.4.7075529 # This NDK version corresponds to '21b' used in buildozer.spec
+        ndk: 26.1.10909125 # Updated NDK version to 26b, compatible with API 34
 
     - name: Create symlinks for deprecated SDK tools paths
       # Buildozer often looks for sdkmanager, aidl, and zipalign in the old 'tools/bin' path.
