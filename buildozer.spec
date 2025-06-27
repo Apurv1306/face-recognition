@@ -17,7 +17,7 @@ version = 0.1
 # (str) Kivy application main file
 # IMPORTANT: This must match the exact filename of your main Python app.
 # Based on your provided code, it is 'face_recognition.py'.
-main.py = face_recognition.py
+main.py = main.py
 
 # (str) The directory where your source code is located
 # '.' means the current directory (the root of your project)
