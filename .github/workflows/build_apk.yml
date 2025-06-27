@@ -32,27 +32,41 @@ jobs:
         sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libssl-dev libffi-dev libsqlite3-dev liblzma-dev libbz2-dev
 
     - name: Set up Android SDK and NDK
-      # Explicitly set ANDROID_SDK_ROOT and ensure command-line tools are available.
-      # This step is crucial for reliable SDK setup and license acceptance.
+      # This step explicitly downloads, extracts, and sets up the Android command-line tools
+      # to ensure `sdkmanager` is available and on the PATH, resolving "command not found" errors.
       run: |
-        # Ensure ANDROID_SDK_ROOT is set to the default path used by GitHub Actions runners
-        echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+        # Define ANDROID_SDK_ROOT, which is the default location for SDK on GitHub Actions runners
         export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
-        # Install command-line tools first, which contains sdkmanager
-        yes | sdkmanager --install "cmdline-tools;latest"
+        # Create the necessary directory structure for command-line tools
+        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest/bin
 
-        # Add sdkmanager to PATH (ensure it's executable)
-        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" # Prepend to ensure it's found
+        # Download and extract the latest Android command-line tools if not already present.
+        # This ensures sdkmanager is available.
+        if [ ! -f "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+          echo "Downloading Android command-line tools..."
+          curl -o /tmp/commandlinetools-linux.zip https://dl.google.com/android/repository/commandlinetools-linux-8583021_latest.zip
+          unzip /tmp/commandlinetools-linux.zip -d $ANDROID_SDK_ROOT/cmdline-tools/latest
+          # The zip might extract into a nested directory, move contents up if so
+          if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools" ]; then
+            mv $ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/
+            rmdir $ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools
+          fi
+          # Ensure sdkmanager is executable
+          chmod +x $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager
+        fi
 
-        # Install necessary SDK components and NDK explicitly
-        # Using a stable NDK version (25.2.8704281 is equivalent to r25b)
-        # This aligns with the 'android.ndk = 25b' in buildozer.spec
-        sdkmanager --install "platforms;android-33" "build-tools;33.0.0" "ndk;25.2.8704281"
+        # Add the command-line tools' bin directory to the PATH for the current shell session.
+        # This makes `sdkmanager` directly callable.
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+        echo "PATH updated to include sdkmanager: $PATH" # For debugging purposes in logs
 
-        # Accept Android SDK licenses
-        # The 'yes' command automatically confirms all license prompts.
+        # Install necessary SDK components and NDK explicitly using the now-available sdkmanager.
+        # This also implicitly handles license acceptance for these specific components.
+        yes | sdkmanager --install "platforms;android-33" "build-tools;33.0.0" "ndk;25.2.8704281"
+
+        # Accept any remaining Android SDK licenses (general acceptance for all components).
         yes | sdkmanager --licenses
 
     - name: Build Android Debug APK
