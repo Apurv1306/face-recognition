@@ -18,9 +18,10 @@ jobs:
       with:
         python-version: '3.9' # Kivy/Buildozer often work well with Python 3.9 or 3.10
 
-    - name: Install Buildozer
+    - name: Install Buildozer and Cython
       run: |
         pip install buildozer
+        pip install cython # Added Cython installation
 
     - name: Set up Android SDK and NDK (using dedicated action)
       # This action handles the installation of Android SDK components,
