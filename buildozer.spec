@@ -12,5 +12,5 @@ android.permissions = INTERNET,CAMERA
 debug = True
 android.target_sdk_version = 34
 android.min_sdk_version = 24
-android.ndk = 21b
+android.ndk = 26b
 android.sdk_path = /usr/local/lib/android/sdk
