@@ -1,38 +1,51 @@
-[app]
-title = FaceRecognitionApp
-package.name = facerecognition
-package.domain = org.example
-source.dir = .
-source.include_exts = py,png,mp3,xlsx
-version = 1.0
-requirements = python3,kivy==2.0.0,numpy,playsound,openpyxl,pillow
-orientation = portrait
-fullscreen = 1
+name: Build APK
 
-# Entry point
-main.py = main.py
+on:
+  workflow_dispatch:
 
-# Presplash and Icon (optional if tick.png is just used in code)
-icon.filename = tick.png
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-# Permissions
-android.permissions = WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, CAMERA
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-# Android-specific requirements
-android.api = 33
-android.minapi = 21
-android.ndk = 25b
-android.archs = armeabi-v7a, arm64-v8a
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-# Audio and camera support
-android.enable_camera = 1
-android.entrypoint = org.kivy.android.PythonActivity
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y libffi-dev libssl-dev \
+          libsqlite3-dev libjpeg-dev zlib1g-dev \
+          libncurses5 libncurses5-dev libncursesw5-dev \
+          libtinfo5 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
+          libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev \
+          libavcodec-dev libfreetype6-dev libglib2.0-dev libmtdev-dev \
+          build-essential git-core python3-pip python3-setuptools \
+          zip unzip openjdk-17-jdk curl wget
 
-# Uncomment to package assets if needed
-# android.source.include_exts = mp3,png,xlsx
+    - name: Install Buildozer
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
 
-# (Optional) Presplash image
-# presplash.filename = presplash.png
+    - name: Initialize Buildozer (if needed)
+      run: |
+        cd ${{ github.workspace }}
+        buildozer init || true
 
-# Application storage
-android.private_storage = True
+    - name: Build APK
+      run: |
+        cd ${{ github.workspace }}
+        buildozer android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: FaceRecognitionApp
+        path: bin/*.apk
+"""
