@@ -15,3 +15,4 @@ android.min_sdk_version = 24
 android.ndk = 26b
 android.sdk_path = /usr/local/lib/android/sdk
 android.ant_path = /usr/bin/ant
+android.api = 24
