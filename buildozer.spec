@@ -1,51 +1,47 @@
-name: Build APK
+[app]
+# ─────────────────────── Application ───────────────────────
+title             = FaceRecognitionApp
+package.name      = facerecognition
+package.domain    = org.example
+version           = 1.0
+orientation       = portrait
+fullscreen        = 1
+icon.filename     = tick.png                  # adjust if you have a real icon
+source.dir        = .
+source.include_exts = py,png,mp3,xlsx
 
-on:
-  workflow_dispatch:
+# Entry point
+# (Buildozer infers main.py automatically, but keep the line explicit)
+main.py           = main.py
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# ─────────────────────── Requirements ──────────────────────
+#
+#  ❗ IMPORTANT:
+#  • Use **opencv** *only* if you replace your current OpenCV calls
+#    with the p4a-compatible subset in the recipe.
+#  • If you simply delete all `cv2` imports, remove “opencv” below.
+#
+requirements       = python3,kivy,opencv,numpy,openpyxl,plyer
+android.need_dpi   = False                    # faster build if unneeded
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+# ────────────────── Android SDK / NDK / API ─────────────────
+android.api        = 33                       # Target API level
+android.minapi     = 21                       # Lowest supported Android
+android.ndk        = 23b                      # Stable NDK
+android.ndk_path   =                          # leave blank ⇒ fetched by CI
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+# ───────────────────── Permissions ──────────────────────────
+android.permissions = CAMERA,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y libffi-dev libssl-dev \
-          libsqlite3-dev libjpeg-dev zlib1g-dev \
-          libncurses5 libncurses5-dev libncursesw5-dev \
-          libtinfo5 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
-          libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev \
-          libavcodec-dev libfreetype6-dev libglib2.0-dev libmtdev-dev \
-          build-essential git-core python3-pip python3-setuptools \
-          zip unzip openjdk-17-jdk curl wget
+# ───────────────────── Architectures ────────────────────────
+android.archs      = arm64-v8a,armeabi-v7a
 
-    - name: Install Buildozer
-      run: |
-        pip install --upgrade pip
-        pip install buildozer cython
+# ───────────── Additional Gradle / Java Memory ─────────────
+#  Avoid “DexArchiveMerger” OOM:
+android.gradle_dependencies = com.android.tools.build:gradle:8.4.0
+android.gradle_options = -Dorg.gradle.jvmargs="-Xmx4600m"
 
-    - name: Initialize Buildozer (if needed)
-      run: |
-        cd ${{ github.workspace }}
-        buildozer init || true
-
-    - name: Build APK
-      run: |
-        cd ${{ github.workspace }}
-        buildozer android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: FaceRecognitionApp
-        path: bin/*.apk
-"""
+# ───────────────────── Customisations ───────────────────────
+# Uncomment if you keep assets in these folders
+# presplash.filename = presplash.png
+# android.entrypoint = org.kivy.android.PythonActivity
