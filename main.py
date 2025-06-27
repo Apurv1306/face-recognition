@@ -35,7 +35,6 @@ from kivy.uix.textinput import TextInput
 # Configuration constants
 # ---------------------------------------------------------------------------
 
-# This constant is no longer directly used for the path; self._known_faces_dir is used instead.
 # SAMPLES_PER_USER is the number of images to capture for each user during registration.
 SAMPLES_PER_USER: int = 10
 # Factor to reduce frame size for faster face detection.
@@ -193,16 +192,12 @@ class FaceApp(App):
         self.register_btn.bind(on_press=self._register_popup)
         self.update_btn.bind(on_press=self._update_photos_popup)
 
-        # Open webcam. Attempt to open camera index 1 (often front camera) first,
-        # then fallback to 0 (default/back camera) if 1 is not available.
-        self.capture = cv2.VideoCapture(1) # Try front camera first
+        # Open webcam. Explicitly attempt to open camera index 1 (often front camera).
+        # If it fails, raise an error as only front camera access is requested.
+        self.capture = cv2.VideoCapture(1) # Attempt to open front camera (index 1)
         if not self.capture.isOpened():
-            Logger("[WARN] Front camera (index 1) not found or not accessible. Attempting default camera (index 0).")
-            self.capture = cv2.VideoCapture(0) # Fallback to default camera
-
-        if not self.capture.isOpened():
-            # If neither camera can be opened, raise an error.
-            raise RuntimeError("Cannot open any webcam – please check camera devices and permissions.")
+            # If front camera cannot be opened, raise an error to inform the user/developer.
+            raise RuntimeError("Cannot open front camera (index 1) – please check camera devices and permissions.")
 
         # Start a separate thread for camera capture and processing to keep UI responsive.
         self.capture_thread = threading.Thread(
