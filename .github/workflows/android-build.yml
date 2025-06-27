@@ -22,11 +22,13 @@ jobs:
       with:
         python-version: '3.9' # Kivy/Buildozer often work well with Python 3.9 or 3.10
 
-    - name: Install Buildozer, Cython, and Setuptools
+    - name: Install Buildozer, Cython, Setuptools, and Ant
       run: |
         pip install buildozer
         pip install cython
         pip install --upgrade setuptools # Ensure setuptools is up-to-date
+        sudo apt-get update
+        sudo apt-get install -y ant # Install Apache Ant using apt-get
 
     - name: Set up Android SDK and NDK (using dedicated action)
       # This action handles the installation of Android SDK components,
