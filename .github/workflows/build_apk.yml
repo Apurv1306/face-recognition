@@ -39,8 +39,12 @@ jobs:
         echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
         export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
 
-        # Add sdkmanager to PATH
+        # Install command-line tools first, which contains sdkmanager
+        yes | sdkmanager --install "cmdline-tools;latest"
+
+        # Add sdkmanager to PATH (ensure it's executable)
         echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" # Prepend to ensure it's found
 
         # Install necessary SDK components and NDK explicitly
         # Using a stable NDK version (25.2.8704281 is equivalent to r25b)
