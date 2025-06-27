@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Explicitly set Android SDK environment variables to where setup-android action installs it
-      # Removed PATH from here to ensure default system PATH is preserved for checkout.
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
@@ -32,12 +31,18 @@ jobs:
     - name: Set up Android SDK and NDK (using dedicated action)
       # This action handles the installation of Android SDK components,
       # including the NDK and platform tools, and accepts licenses.
-      # It should also correctly set ANDROID_HOME and add necessary paths to PATH for subsequent steps.
       uses: android-actions/setup-android@v2
       with:
         api-level: 34 # Target Android API 34
         build-tools: 34.0.0 # Match API 34
         ndk: 21.4.7075529 # This NDK version corresponds to '21b' used in buildozer.spec
+
+    - name: Create symlink for deprecated SDK tools path
+      # Buildozer often looks for sdkmanager in the old 'tools/bin' path.
+      # This creates a symlink to the new 'cmdline-tools/latest/bin' directory.
+      run: |
+        mkdir -p "${{ env.ANDROID_SDK_ROOT }}/tools"
+        ln -s "${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin" "${{ env.ANDROID_SDK_ROOT }}/tools/bin"
 
     - name: Cache Buildozer dependencies
       uses: actions/cache@v4
@@ -52,8 +57,9 @@ jobs:
 
     - name: Build Android APK
       run: |
-        # ANDROID_HOME and ANDROID_SDK_ROOT are set at the job level.
-        # The setup-android action should have already added necessary SDK paths to PATH.
+        # Ensure PATH includes the necessary Android SDK tool directories for Buildozer.
+        # The symlink created earlier should help with older Buildozer references.
+        export PATH="${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0:${{ env.ANDROID_SDK_ROOT }}/platform-tools:${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
         buildozer android debug -v
 
     - name: Upload APK artifact
