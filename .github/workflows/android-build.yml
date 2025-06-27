@@ -37,12 +37,15 @@ jobs:
         build-tools: 34.0.0 # Match API 34
         ndk: 21.4.7075529 # This NDK version corresponds to '21b' used in buildozer.spec
 
-    - name: Create symlink for deprecated SDK tools path
-      # Buildozer often looks for sdkmanager in the old 'tools/bin' path.
-      # This creates a symlink to the new 'cmdline-tools/latest/bin' directory.
+    - name: Create symlinks for deprecated SDK tools paths
+      # Buildozer often looks for sdkmanager, aidl, and zipalign in the old 'tools/bin' path.
+      # This step creates symlinks from the expected old locations to the actual new locations.
       run: |
-        mkdir -p "${{ env.ANDROID_SDK_ROOT }}/tools"
-        ln -s "${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin" "${{ env.ANDROID_SDK_ROOT }}/tools/bin"
+        mkdir -p "${{ env.ANDROID_SDK_ROOT }}/tools/bin"
+        ln -sf "${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin/sdkmanager" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/sdkmanager"
+        ln -sf "${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0/aidl" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/aidl"
+        ln -sf "${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0/zipalign" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/zipalign"
+        echo "Symlinks created for sdkmanager, aidl, and zipalign."
 
     - name: Cache Buildozer dependencies
       uses: actions/cache@v4
@@ -58,7 +61,7 @@ jobs:
     - name: Build Android APK
       run: |
         # Ensure PATH includes the necessary Android SDK tool directories for Buildozer.
-        # The symlink created earlier should help with older Buildozer references.
+        # The symlinks created earlier should now correctly resolve Buildozer's references.
         export PATH="${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0:${{ env.ANDROID_SDK_ROOT }}/platform-tools:${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
         buildozer android debug -v
 
