@@ -1,0 +1,83 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
+    steps:
+    # ──────────────────────────────────────────
+    # 1. Checkout
+    # ──────────────────────────────────────────
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # ──────────────────────────────────────────
+    # 2. Python
+    # ──────────────────────────────────────────
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # ──────────────────────────────────────────
+    # 3. System dependencies
+    # ──────────────────────────────────────────
+    - name: Install system packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential autoconf automake libtool libtool-bin make gcc g++ pkg-config \
+          libjpeg-dev zlib1g-dev libfreetype6-dev libpng-dev libblas-dev liblapack-dev \
+          ffmpeg openjdk-17-jdk
+
+    # ──────────────────────────────────────────
+    # 4. Buildozer & pip deps
+    # ──────────────────────────────────────────
+    - name: Install Buildozer
+      run: |
+        pip install --upgrade pip setuptools cython
+        pip install buildozer
+
+    # ──────────────────────────────────────────
+    # 5. Android SDK + NDK 23.1.7779620
+    # ──────────────────────────────────────────
+    - name: Set up Android SDK / NDK
+      run: |
+        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+        cd "$ANDROID_SDK_ROOT/cmdline-tools"
+        curl -sSL https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -o tools.zip
+        unzip -q tools.zip
+        rm tools.zip
+        mv cmdline-tools latest
+
+        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+        yes | sdkmanager --licenses
+        sdkmanager "platforms;android-31" "build-tools;33.0.2" "ndk;23.1.7779620"
+
+    # ──────────────────────────────────────────
+    # 6. Build APK
+    # ──────────────────────────────────────────
+    - name: Build debug APK
+      run: |
+        export ANDROIDSDK=$ANDROID_SDK_ROOT
+        export ANDROIDNDK=$ANDROID_SDK_ROOT/ndk/23.1.7779620
+        buildozer android debug
+
+    # ──────────────────────────────────────────
+    # 7. Upload artifact
+    # ──────────────────────────────────────────
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: faceattendance-debug-apk
+        path: bin/*.apk
