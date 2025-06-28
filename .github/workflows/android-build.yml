@@ -28,17 +28,18 @@ jobs:
       with:
         python-version: '3.9' # Kivy/Buildozer often work well with Python 3.9 or 3.10
 
-    - name: Install System Build Tools (Ant, Autotools, Build Essentials, Libtool)
+    - name: Install System Build Tools (Ant, Autotools, Build Essentials, Libtool, Unzip, Pkg-Config, Automake)
       # Install these before Buildozer starts its operations to ensure they are available
       run: |
         sudo apt-get update
-        sudo apt-get install -y ant autotools-dev build-essential libtool # Added libtool for autoreconf issues
+        sudo apt-get install -y ant autotools-dev build-essential libtool unzip pkg-config automake # Added automake
 
-    - name: Install Python Dependencies (Buildozer, Cython, Setuptools)
+    - name: Install Python Dependencies (Buildozer, Cython, Setuptools, Python-for-Android)
       run: |
         pip install buildozer
         pip install cython
         pip install --upgrade setuptools # Ensure setuptools is up-to-date
+        pip install --upgrade python-for-android # Upgrade P4A to the latest version
 
     - name: Set up Android SDK and NDK (using dedicated action)
       # This action handles the installation of Android SDK components,
@@ -49,12 +50,29 @@ jobs:
         build-tools: 34.0.0 # Match API 34
         ndk: 25.2.9519653 # NDK version to match 25b, compatible with API 34
 
+    - name: Create symlinks for deprecated SDK tools paths
+      # Buildozer often looks for sdkmanager, aidl, and zipalign in the old 'tools/bin' path.
+      # This step creates symlinks from the expected old locations to the actual new locations.
+      run: |
+        mkdir -p "${{ env.ANDROID_SDK_ROOT }}/tools/bin"
+        ln -sf "${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin/sdkmanager" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/sdkmanager"
+        ln -sf "${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0/aidl" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/aidl"
+        ln -sf "${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0/zipalign" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/zipalign"
+        echo "Symlinks created for sdkmanager, aidl, and zipalign."
+
+    - name: Set Python-for-Android API environment variables
+      # Explicitly set these environment variables which P4A might pick up
+      run: |
+        echo "P4A_API=28" >> $GITHUB_ENV
+        echo "P4A_MINSDK=28" >> $GITHUB_ENV
+        # Explicitly set ANDROID_NDK_HOME to ensure consistency with the requested NDK version.
+        echo "ANDROID_NDK_HOME=${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653" >> $GITHUB_ENV
+
     - name: Build Android APK
       run: |
-        # Explicitly pass android-api and ndk-api to ensure python-for-android uses the correct versions.
-        # android-api is set to target_sdk_version (34)
-        # ndk-api is set to min_sdk_version (28) for broader compatibility with native libraries.
-        buildozer android debug -v --android-api=34 --android-ndk-api=28
+        # Buildozer should now correctly find all required tools based on buildozer.spec settings
+        # and the explicitly set environment variables.
+        buildozer android debug -v
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
