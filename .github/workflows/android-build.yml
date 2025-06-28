@@ -28,11 +28,11 @@ jobs:
       with:
         python-version: '3.9' # Kivy/Buildozer often work well with Python 3.9 or 3.10
 
-    - name: Install System Build Tools (Ant, Autotools, Build Essentials, Libtool, Unzip, Pkg-Config, Automake)
+    - name: Install System Build Tools (Ant, Autotools, Build Essentials, Libtool, Unzip, Pkg-Config, Automake, CMake, M4)
       # Install these before Buildozer starts its operations to ensure they are available
       run: |
         sudo apt-get update
-        sudo apt-get install -y ant autotools-dev build-essential libtool unzip pkg-config automake # Added automake
+        sudo apt-get install -y ant autotools-dev build-essential libtool unzip pkg-config automake cmake m4
 
     - name: Install Python Dependencies (Buildozer, Cython, Setuptools, Python-for-Android)
       run: |
@@ -48,7 +48,7 @@ jobs:
       with:
         api-level: 34 # Target Android API 34
         build-tools: 34.0.0 # Match API 34
-        ndk: 25.2.9519653 # NDK version to match 25b, compatible with API 34
+        ndk: 25.2.9519653 # Explicitly use NDK 25.2.9519653 (equivalent to 25b)
 
     - name: Create symlinks for deprecated SDK tools paths
       # Buildozer often looks for sdkmanager, aidl, and zipalign in the old 'tools/bin' path.
@@ -60,22 +60,33 @@ jobs:
         ln -sf "${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0/zipalign" "${{ env.ANDROID_SDK_ROOT }}/tools/bin/zipalign"
         echo "Symlinks created for sdkmanager, aidl, and zipalign."
 
-    - name: Set Python-for-Android API environment variables
-      # Explicitly set these environment variables which P4A might pick up
+    - name: Configure Autoreconf Environment
+      # Explicitly set ACLOCAL_PATH to ensure libtool macros are found.
       run: |
-        echo "P4A_API=28" >> $GITHUB_ENV
-        echo "P4A_MINSDK=28" >> $GITHUB_ENV
-        # Explicitly set ANDROID_NDK_HOME to ensure consistency with the requested NDK version.
-        echo "ANDROID_NDK_HOME=${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653" >> $GITHUB_ENV
+        export ACLOCAL_PATH="/usr/share/aclocal"
+        # Attempt to run libtoolize --force --copy if it helps with macro issues
+        libtoolize --automake --force --copy || true # Use || true to prevent job failure if it's not needed or fails benignly
+        autoreconf --install --force || true # Re-run autoreconf to ensure everything is set up
+
+    - name: Check Network Connectivity (Diagnostic)
+      run: |
+        echo "Attempting to curl Google to check network connectivity..."
+        curl -v https://www.google.com
 
     - name: Build Android APK
       run: |
-        # Explicitly set ANDROIDMINAPI and ANDROID_NDK_ROOT for maximum certainty.
-        export ANDROIDMINAPI=28
+        # Explicitly set ANDROID_NDK_HOME and ANDROID_NDK_ROOT to the exact path of NDK 25.2.9519653.
+        export ANDROID_NDK_HOME="${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653"
         export ANDROID_NDK_ROOT="${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653"
-        # Buildozer should now correctly find all required tools based on buildozer.spec settings
-        # and the explicitly set environment variables.
+        
+        # CRITICAL: Explicitly override ANDROIDMINAPI and ANDROIDAPI directly before buildozer.
+        # This is the most aggressive way to ensure P4A uses these values.
+        export ANDROIDMINAPI=28
+        export ANDROIDAPI=34
+        
         # Explicitly pass android-api and ndk-api to ensure python-for-android uses the correct versions.
+        # android-api is set to target_sdk_version (34)
+        # ndk-api is set to min_sdk_version (28) for broader compatibility with native libraries.
         buildozer android debug -v --android-api=34 --android-ndk-api=28 --log-level 2
 
     - name: Upload APK artifact
