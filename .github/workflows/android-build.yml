@@ -28,11 +28,11 @@ jobs:
       with:
         python-version: '3.9' # Kivy/Buildozer often work well with Python 3.9 or 3.10
 
-    - name: Install System Build Tools (Ant, Autotools, Build Essentials)
+    - name: Install System Build Tools (Ant, Autotools, Build Essentials, Libtool)
       # Install these before Buildozer starts its operations to ensure they are available
       run: |
         sudo apt-get update
-        sudo apt-get install -y ant autotools-dev build-essential
+        sudo apt-get install -y ant autotools-dev build-essential libtool # Added libtool for autoreconf issues
 
     - name: Install Python Dependencies (Buildozer, Cython, Setuptools)
       run: |
@@ -49,21 +49,12 @@ jobs:
         build-tools: 34.0.0 # Match API 34
         ndk: 25.2.9519653 # NDK version to match 25b, compatible with API 34
 
-    - name: Explicitly set ANDROID_NDK_HOME
-      # This step ensures that ANDROID_NDK_HOME points to the correct NDK version
-      # installed by the setup-android action, overriding any potential conflicts.
-      run: |
-        echo "ANDROID_NDK_HOME=${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653" >> $GITHUB_ENV
-        echo "P4A_API=34" >> $GITHUB_ENV # Reinforce P4A API level
-
-    - name: Add execute permission to main.py (if needed)
-      run: chmod +x main.py
-
     - name: Build Android APK
       run: |
-        # Buildozer should now correctly find all required tools based on buildozer.spec settings
-        # and the explicitly set environment variables.
-        buildozer android debug -v
+        # Explicitly pass android-api and ndk-api to ensure python-for-android uses the correct versions.
+        # android-api is set to target_sdk_version (34)
+        # ndk-api is set to min_sdk_version (28) for broader compatibility with native libraries.
+        buildozer android debug -v --android-api=34 --android-ndk-api=28
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
