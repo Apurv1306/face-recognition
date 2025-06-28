@@ -16,3 +16,4 @@ android.ndk = 26b
 android.sdk_path = /usr/local/lib/android/sdk
 android.ant_path = /usr/bin/ant
 android.api = 28
+android.ndk_api = 28
