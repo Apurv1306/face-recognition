@@ -12,7 +12,7 @@ android.permissions = INTERNET,CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORA
 debug = True
 android.target_sdk_version = 34
 android.min_sdk_version = 28
-android.ndk = 25b
+android.ndk = latest # Using 'latest' for NDK via setup-android action
 android.sdk_path = /usr/local/lib/android/sdk
 android.ant_path = /usr/bin/ant
 # Removed android.api and android.ndk_api from here as they will be passed directly to buildozer command
