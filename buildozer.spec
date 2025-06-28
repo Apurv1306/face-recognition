@@ -11,9 +11,8 @@ main.py = main.py
 android.permissions = INTERNET,CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 debug = True
 android.target_sdk_version = 34
-android.min_sdk_version = 28  # Re-introducing this
+android.min_sdk_version = 28
 android.ndk = 25b
 android.sdk_path = /usr/local/lib/android/sdk
 android.ant_path = /usr/bin/ant
-android.api = 34
-android.ndk_api = 34
+# Removed android.api and android.ndk_api from here as they will be passed directly to buildozer command
