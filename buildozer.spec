@@ -15,5 +15,4 @@ android.min_sdk_version = 28
 android.ndk = 25b
 android.sdk_path = /usr/local/lib/android/sdk
 android.ant_path = /usr/bin/ant
-android.api = 28
-android.ndk_api = 28
+# Removed android.api and android.ndk_api from here as they will be passed directly to buildozer command
