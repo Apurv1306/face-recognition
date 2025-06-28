@@ -1,18 +1,34 @@
 [app]
-title = FaceApp Attendance
-package.name = faceappattendance
-package.domain = org.test
-version = 0.1
-requirements = python3,kivy==2.2.1,opencv-python,numpy,requests
-categories = business
-source.dir = .
-source.include_exts = py,png,mp3,kv,json
-main.py = main.py
-android.permissions = INTERNET,CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
-debug = True
-android.target_sdk_version = 34
-android.min_sdk_version = 28
-android.ndk = 25b
-android.sdk_path = /usr/local/lib/android/sdk
-android.ant_path = /usr/bin/ant
-# Removed android.api and android.ndk_api to rely solely on command-line arguments
+# Title and package metadata
+title           = FaceAttendanceApp
+package.name    = faceattendance
+package.domain  = org.yourorg
+
+# Source files
+source.dir      = .
+source.include_exts = py,mp3,png,jpg,kv,txt
+
+# App version
+version         = 0.1
+
+# Python requirements
+# — must include everything main.py imports:
+requirements    = python3,kivy,opencv-python,numpy,playsound,openpyxl
+
+# Orientation
+orientation      = portrait
+
+# Permissions
+android.permissions = CAMERA,WRITE_EXTERNAL_STORAGE
+
+# (Optional) If you need to access the file system at runtime:
+#android.request_camerapermission = True
+
+[buildozer]
+# Target API and architectures
+android.api     = 31
+android.ndk     = 23b
+android.archs   = armeabi-v7a,arm64-v8a
+
+# (Optional) Increase log verbosity
+log_level       = 2
