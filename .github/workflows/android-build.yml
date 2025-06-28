@@ -28,13 +28,13 @@ jobs:
       with:
         python-version: '3.9' # Kivy/Buildozer often work well with Python 3.9 or 3.10
 
-    - name: Install Buildozer, Cython, Setuptools, and Ant
+    - name: Install Buildozer, Cython, Setuptools, Ant, Autotools, and Build Essentials
       run: |
         pip install buildozer
         pip install cython
         pip install --upgrade setuptools # Ensure setuptools is up-to-date
         sudo apt-get update
-        sudo apt-get install -y ant # Install Apache Ant using apt-get
+        sudo apt-get install -y ant autotools-dev build-essential # Install Apache Ant, Autotools, and build-essential
 
     - name: Set up Android SDK and NDK (using dedicated action)
       # This action handles the installation of Android SDK components,
@@ -70,8 +70,8 @@ jobs:
       run: |
         # Ensure PATH includes the necessary Android SDK tool directories for Buildozer.
         # The symlinks created earlier should now correctly resolve Buildozer's references.
-        export PATH="${{ env.ANDROID_SDK_ROOT }}/build-tools/34.0.0:${{ env.ANDROID_SDK_ROOT }}/platform-tools:${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
-        buildozer android debug -v
+        # Explicitly pass android-api to ensure it's used.
+        buildozer android debug -v --android-api=28
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
